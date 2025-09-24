@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  gateway-api:
+    build: ./gateway-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - signaling
+    networks:
+      - game-net
+
+  signaling:
+    build: ./signaling
+    ports:
+      - "8081:8081"
+    networks:
+      - game-net
+
+  game-host-agent:
+    build: ./game-host-agent
+    devices:
+      - /dev/uinput:/dev/uinput   # input injection
+    networks:
+      - game-net
+
+  client-demo:
+    build: ./client-demo
+    ports:
+      - "8082:80"
+    networks:
+      - game-net
+
+networks:
+  game-net:
+    driver: bridge

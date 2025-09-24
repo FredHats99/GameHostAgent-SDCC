@@ -1,0 +1,1 @@
+ssh_private_key_path = "C:/Users/feder/GolandProjects/GameHostAgent-SDCC/gamecloud-key.pem"
