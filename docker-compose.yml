@@ -19,8 +19,10 @@ services:
 
   game-host-agent:
     build: ./game-host-agent
-    devices:
-      - /dev/uinput:/dev/uinput   # input injection
+    ports:
+      - "8090:8090"
+#    devices:
+#      - /dev/uinput:/dev/uinput   # input injection
     networks:
       - game-net
 
