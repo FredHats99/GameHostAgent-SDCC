@@ -21,6 +21,33 @@ resource "aws_instance" "game_host" {
 
   vpc_security_group_ids = [aws_security_group.game_host_sg.id]
 
+  user_data = <<-EOF
+              #!/bin/bash
+              set -xe
+
+              # Attendi che apt non sia in uso
+              while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1 ; do
+                echo "Attendo che apt si liberi..."
+                sleep 5
+              done
+
+              # update
+              apt-get update -y && apt-get upgrade -y
+
+              # install docker-compose (v1)
+              apt-get install -y docker-compose
+
+              # clone repo
+              cd /home/ubuntu
+              git clone https://github.com/<utente>/<repo>.git GameHostAgent-SDCC
+              cd GameHostAgent-SDCC
+
+              # build & run
+              docker-compose up -d --build
+
+              # fine
+              EOF
+
   provisioner "remote-exec" {
     inline = [
       "sudo apt update",
@@ -77,4 +104,9 @@ resource "aws_security_group" "game_host_sg" {
 
 data "aws_vpc" "default" {
   default = true
+}
+
+output "gamehost_public_ip" {
+  description = "IP pubblico dell'istanza EC2"
+  value = aws_instance.game_host.public_ip
 }
