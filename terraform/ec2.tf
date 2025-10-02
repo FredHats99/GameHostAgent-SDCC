@@ -22,31 +22,20 @@ resource "aws_instance" "game_host" {
   vpc_security_group_ids = [aws_security_group.game_host_sg.id]
 
   user_data = <<-EOF
-              #!/bin/bash
-              set -xe
+  #cloud-config
+  package_update: true
+  packages:
+    - git
+    - docker.io
+    - docker-compose
 
-              # Attendi che apt non sia in uso
-              while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1 ; do
-                echo "Attendo che apt si liberi..."
-                sleep 5
-              done
+  runcmd:
+    - [ systemctl, enable, docker ]
+    - [ usermod, -aG, docker, ubuntu ]
+    - [ git, clone, https://github.com/FredHats99/GameHostAgent-SDCC.git, /home/ubuntu/GameHostAgent-SDCC ]
+    - [ bash, -c, "cd /home/ubuntu/GameHostAgent-SDCC && docker-compose up -d --build" ]
+  EOF
 
-              # update
-              apt-get update -y && apt-get upgrade -y
-
-              # install docker-compose (v1)
-              apt-get install -y docker-compose
-
-              # clone repo
-              cd /home/ubuntu
-              git clone https://github.com/<utente>/<repo>.git GameHostAgent-SDCC
-              cd GameHostAgent-SDCC
-
-              # build & run
-              docker-compose up -d --build
-
-              # fine
-              EOF
 
   provisioner "remote-exec" {
     inline = [
@@ -79,10 +68,34 @@ resource "aws_security_group" "game_host_sg" {
   }
 
   ingress {
-    description = "HTTP"
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    description = "Gateway API"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Signaling"
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Client demo"
+    from_port   = 8082
+    to_port     = 8082
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Game Host Agent"
+    from_port   = 8090
+    to_port     = 8090
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 

@@ -7,6 +7,12 @@ services:
       - "8080:8080"
     depends_on:
       - signaling
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     networks:
       - game-net
 
@@ -14,6 +20,12 @@ services:
     build: ./signaling
     ports:
       - "8081:8081"
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     networks:
       - game-net
 
@@ -21,15 +33,23 @@ services:
     build: ./game-host-agent
     ports:
       - "8090:8090"
-#    devices:
-#      - /dev/uinput:/dev/uinput   # input injection
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     networks:
       - game-net
+    # Se in futuro abiliti uinput:
+    # devices:
+    #   - /dev/uinput:/dev/uinput
 
   client-demo:
     build: ./client-demo
     ports:
       - "8082:80"
+    restart: always
     networks:
       - game-net
 
